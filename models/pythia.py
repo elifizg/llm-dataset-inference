@@ -9,7 +9,7 @@ def load_model(model_name: str = P.MODEL_NAME) -> tuple:
     tokenizer = AutoTokenizer.from_pretrained(model_name)
     tokenizer.pad_token = tokenizer.eos_token
     dtype = torch.float16 if P.TORCH_DTYPE == "float16" else torch.float32
-    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=dtype, device_map=P.DEVICE)
+    model = AutoModelForCausalLM.from_pretrained(model_name, dtype=dtype, device_map=P.DEVICE)
     model.eval()
     n_params = sum(p.numel() for p in model.parameters()) / 1e6
     print(f"[pythia] Loaded — {n_params:.0f}M parameters")
