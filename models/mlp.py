@@ -225,3 +225,38 @@ class ImprovedMLPRegressor:
         with torch.no_grad():
             scores = self.model(X_tensor).numpy()
         return scores
+
+    def save(self, path: str) -> None:
+        """
+        Save the fitted model and scaler to disk.
+
+        Args:
+            path: File path ending in .pt (e.g. 'checkpoints/mlp_wikipedia_410m.pt')
+        """
+        assert self.is_fitted, "Call fit() before save()."
+        torch.save({
+            "model_state":  self.model.state_dict(),
+            "scaler_mean":  self.scaler.mean_,
+            "scaler_scale": self.scaler.scale_,
+            "input_dim":    self.input_dim,
+            "hidden_dim":   self.hidden_dim,
+        }, path)
+        print(f"[mlp] Model saved: {path}")
+
+    def load(self, path: str) -> None:
+        """
+        Load a previously saved model and scaler from disk.
+
+        Args:
+            path: File path to the saved .pt file.
+        """
+        checkpoint = torch.load(path, map_location="cpu")
+        self.input_dim  = checkpoint["input_dim"]
+        self.hidden_dim = checkpoint["hidden_dim"]
+        self.model      = ImprovedMLP(self.input_dim, self.hidden_dim)
+        self.model.load_state_dict(checkpoint["model_state"])
+        self.model.eval()
+        self.scaler.mean_  = checkpoint["scaler_mean"]
+        self.scaler.scale_ = checkpoint["scaler_scale"]
+        self.is_fitted = True
+        print(f"[mlp] Model loaded: {path}")
