@@ -170,7 +170,7 @@ class ImprovedMLPRegressor:
             loss = criterion(pred, y_tensor)
             loss.backward()
             optimizer.step()
-            scheduler.step(loss)
+            scheduler.step(loss.detach())
 
             loss_val = loss.item()
             loss_history.append(loss_val)
