@@ -2,41 +2,55 @@
 # Central configuration file. All settings are managed here.
 # To change any parameter, only this file needs to be modified.
 
+import os
+
 # ── Model ─────────────────────────────────────────────────────────────────────
-MODEL_NAME  = "EleutherAI/pythia-410m-deduped"  # 410m-deduped | 1.4b-deduped | 6.9b-deduped | 12b-deduped
+MODEL_NAME  = "EleutherAI/pythia-410m-deduped"  # 410m | 1.4b | 6.9b | 12b
 TORCH_DTYPE = "float16"                          # float16 (GPU) | float32 (CPU)
 DEVICE      = "cuda"                             # cuda | cpu
 
 # ── Data ──────────────────────────────────────────────────────────────────────
-SUBSET      = "wikipedia_(en)"   # wikipedia_(en) | arxiv | github | pile_cc | pubmed_central
-N_SAMPLES   = 1000               # number of examples for each of train and val splits
+SUBSET      = "wikipedia"        # wikipedia | arxiv | github
+N_SAMPLES   = 2000               # full dataset (2000 per split)
 SEQ_LENGTH  = 512                # maximum sequence length in tokens
 RANDOM_SEED = 42
 
 # ── MIA Scores ────────────────────────────────────────────────────────────────
-# Controls which MIA groups are computed.
 COMPUTE_PERPLEXITY   = True
 COMPUTE_ZLIB         = True
 COMPUTE_MIN_K        = True
 COMPUTE_MAX_K        = True
-COMPUTE_PERTURBATION = False  # disabled for Phase 1; enabled in Phase 2
-COMPUTE_REFERENCE    = False  # reference models are time-intensive; Phase 2
+COMPUTE_PERTURBATION = False  # Phase 2
+COMPUTE_REFERENCE    = False  # Phase 2
 
-K_VALUES = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]  # k values for min-k and max-k
+K_VALUES = [0.05, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6]
 
-# ── Training (Linear Regressor) ───────────────────────────────────────────────
-OUTLIER_PERCENTILE = 2.5  # top and bottom percentile clipped before training
-A_SPLIT_RATIO      = 0.5  # fraction of data used for A-split (regressor training)
-N_SEEDS            = 10   # number of random seeds for repeated t-tests
+# ── Training ──────────────────────────────────────────────────────────────────
+OUTLIER_PERCENTILE = 2.5
+A_SPLIT_RATIO      = 0.5
+N_SEEDS            = 10
 
 # ── Testing ───────────────────────────────────────────────────────────────────
-P_VALUE_THRESHOLD = 0.1  # p-value below this threshold → dataset was in training
-FP_P_VALUE_MIN    = 0.5  # false positive test: p-value must exceed this value
+P_VALUE_THRESHOLD = 0.1
+FP_P_VALUE_MIN    = 0.5
 
 # ── Batch ─────────────────────────────────────────────────────────────────────
-BATCH_SIZE = 16  # 16-32 for A100; use 8 for T4
+BATCH_SIZE = 16  # 16-32 for A100; 8 for T4
 
-# ── Checkpoints and Results ───────────────────────────────────────────────────
-DRIVE_BASE     = "/content/drive/MyDrive/llm_dataset_inference"
-CHECKPOINT_DIR = f"{DRIVE_BASE}/checkpoints"
-RESULTS_DIR    = f"{DRIVE_BASE}/results"
+# ── Paths (auto-detected) ─────────────────────────────────────────────────────
+# Detects whether running in Google Colab or locally and sets paths accordingly.
+# Override these manually if your Drive path is different.
+
+def _detect_base():
+    """Return the appropriate base directory for the current environment."""
+    # Google Colab
+    colab_base = "/content/drive/MyDrive/llm_dataset_inference"
+    if os.path.exists("/content/drive/MyDrive"):
+        return colab_base
+    # Local fallback — creates directories next to this file
+    local_base = os.path.join(os.path.dirname(os.path.abspath(__file__)), "output")
+    return local_base
+
+_BASE          = _detect_base()
+CHECKPOINT_DIR = os.path.join(_BASE, "checkpoints")
+RESULTS_DIR    = os.path.join(_BASE, "results")
